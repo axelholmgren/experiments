@@ -1,0 +1,203 @@
+Experiment kamerariktingar
+
+Notering: från höger menar att vi placerar kameran till höger om objektet och sveper in mot objektet ”roterar motsols”, tvärt om i vänsterfallet
+
+Notering: kamera något ”nedpitchad” -5 deg under exp 1,2,3
+
+Notering glasburk diameter 36,5 cm 
+
+Exp 1 justerar in gimbal på utsatta mätpunkter 0, -45, -90 +45
+BÖR,ÄR:
+1. 0.,-1
+2. -45, -57.55
+3. -90, -98,5
+4. -45, -56,5
+5. 0, -1
+
+
+Exp 2 hysteresis justering av gimbal på utsatta punkter injustering endast från höger
+0deg
+1. 0,-2
+2. 0,-2
+-45 deg 
+1. -45, -58
+2. -45, -58
+-90 deg
+1. -90, -99
+2. -90, -99
+
+Exp 3 hysteresis justering av gimbal på utsatta punkter injustering endast från vänster 
+0deg
+1. 0,-1.5
+2. 0,-1
+-45deg
+1. -45, -56
+2. -45, -56
+-90deg 
+1. -90, -98
+2. -90, -98
+
+
+Notering för exp 4,5 pitchar kamera till absolut 0 genom att mäta höjd till kamera och till höjd på mål. Verkar ligga någonstans mellan 0 och -1 i skillnad mellan absolut pitch och systemets pitch
+Exp 4 Hysteresis justering av gimbal på utsatta punkter injustering endast från höger 
+0deg
+1. 0, -2
+2. 0, -2
+-45 deg 
+1. -45, -58
+2. -45, -58
+-90 deg
+1. -90, -99
+2. -90, -99
+
+Exp 5 Hysteresis justering av gimbal på utsatta punkter injustering endast från vänster
+0deg
+1. 0, -1
+2. 0, -1
+-45 deg 
+1. -45, -56
+2. -45, -56
+-90 deg
+1. -90, -98
+2. -90, - 98
+
+
+Exp 6 Vinkel till objektet utan tracking. Menar att YOLO tar fram en vinkel utifrån bildenmobiltelefon yoloe detektion på samma location som tidigare objekt, lyckades inte detektera mobiltelefon, använder laptop, 
+
+BÖR/ÄR,
+0,+173
+-45, +93
+-90, +50
+
+EXP 7 YOLOE tracking laptop, rör gimbal
+
+BÖR/ÄR
+0,+173
+-45,+94
+-90, +50
+
+0->45: 79 deg
+45->90: 44 deg
+ 
+Exp 7 mer granulär mätning av vinklar, vill ha setup typ måttband 
+Notering använder 1cm mellanrum mellan rutorna, bör motsvara ca 10 deg
+
+Mellan -90deg  och 0 deg: 9 sträck  
+
+Från höger(motsols): (sträck 0 är våran 0deg)
+0: 0 deg
+-1: -12 deg
+-2: -24 deg
+-3: -38 deg 
+-4: -50 deg
+-5: -62 deg
+-6: -70 deg
+-7: -79 deg
+-8: -88 deg
+-9 - 96deg
+
+Från vänster (medsols):
+
+-9: -96 deg
+-8: -87 deg
+-7: -77 deg
+-6: -69 deg
+-5: -61 deg 
+-4: -49 deg
+-3: -37 deg
+-2: -24 deg 
+-1: -11 deg 
+0: -1 deg
+
+Från vänster (medsols):
+0: -1 deg
++1: 7 deg
++2: 16 deg
++3: 24 deg
++4: 32 deg
++5: 43 deg
++6: 54 deg
++7: 64 deg
++8: 73 deg
++9: 81 deg 
+
+Från höger (motsols):
++9: 82 deg
++8: 73 deg
++7: 64 deg
++6: 54 deg
++5: 42 deg
++4: 31 deg
++3: 23 deg
++2: 14 deg 
++1: 5 deg
+0:  -2 deg
+
+
+
+Exp 8: rutnätsbild 3cm rutor
+
+
+
+Exp 9 mer granulär mätning av vinklar, vill ha setup typ måttband 
+Notering använder 1cm mellanrum mellan rutorna, bör motsvara ca 10 deg
+Notering glasburk diameter 36,5 cm 
+
+NEDPITCHAD kamera 
+
+Mellan -90deg  och 0 deg: 9 sträck  
+
+Från höger(motsols): (sträck 0 är våran 0deg)
++9: 81 deg
++8: 72 deg
++7: 64 deg
++6: 54 deg
++5:  42 deg 
++4: 32 deg
++3: 23 deg
++2: 15 deg
++1: 7 deg
+0: -1 deg
+-1: -10 deg 
+-2: -23 deg
+-3: -36 deg
+-4: -48 deg
+-5: -60 deg
+-6: 68 deg
+-7: -77 deg
+-8: -85 deg
+-9: -94 deg
+
+Exp 10 repterar experiment från +90 till- 90 från höger. 
+Notering;: detta experiment sker efter omstart samt pitch och roll vid uppstart
+
++9: 83 deg
++8: 74 deg
++7: 66 deg
++6: 56 deg
++5: 44 deg
++4: 34 deg
++3: 24 deg
++2: 16 deg
++1: 7 deg
+0: -1 deg
+-1: -11 deg
+-2: -23 deg
+-3: -37 deg
+-4: -49 deg
+-5: -60 deg
+-6: -69 deg
+-7: -77 deg
+-8:  -86 deg
+-9: 95 deg 
+
+Snabbtest,
+GUI angle set, measured YAW från EVOLO, kan bero på delay
+-90,0 
+0, 90
+
+
+
+Yaw encoder better than heading
+
+
