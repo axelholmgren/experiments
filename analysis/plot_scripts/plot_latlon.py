@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 ROS_BAG = Path.home() / "code/data/ros_bags/rosbag2_2026_08_17-12_20_02"
-RESULTS_DIR = Path.home() / "code/experiments/results/"
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
+PLOTS_DIR = RESULTS_DIR / "plots"
 
 
 def main():
@@ -28,7 +29,8 @@ def main():
     plt.ylabel("latitude")
     plt.legend()
 
-    out_path = RESULTS_DIR / "latlon_trajectory.png"
+    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = PLOTS_DIR / "latlon_trajectory.png"
     plt.savefig(out_path, dpi=300)
     print(f"Saved {out_path}")
     plt.show()

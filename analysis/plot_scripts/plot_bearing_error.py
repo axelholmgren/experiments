@@ -9,11 +9,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-RESULTS_DIR = Path.home() / "code/experiments/results/"
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
+PLOTS_DIR = RESULTS_DIR / "plots"
 DEFAULT_CSV = "bearing_error.csv"
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bench_experiments"))
-from gimbal_yaw_correction import PSI_MAX, PSI_MIN, correct_yaw  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "evolo_gimbal_calibration"))
+from evolo_gimbal_calibration.gimbal_yaw_correction import PSI_MAX, PSI_MIN, correct_yaw  # noqa: E402
 
 
 def plot_bearing_error(errors: pd.DataFrame, gimbal: pd.DataFrame, name: str,
@@ -99,7 +100,8 @@ def main():
             f"{rows['angle_error_deg'].abs().median():>14.2f}°"
         )
 
-    plot_bearing_error(errors, gimbal, csv_path.stem, RESULTS_DIR / f"{csv_path.stem}.png")
+    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+    plot_bearing_error(errors, gimbal, csv_path.stem, PLOTS_DIR / f"{csv_path.stem}.png")
     plt.show()
 
 

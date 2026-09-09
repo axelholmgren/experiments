@@ -15,7 +15,8 @@ from load_detections import load_detections
 
 BAGS_DIR = Path.home() / "code/data/ros_bags"
 ROS_BAG = BAGS_DIR / "rosbag2_2026_08_17-12_20_02"
-RESULTS_DIR = Path.home() / "code/experiments/results/"
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
+PLOTS_DIR = RESULTS_DIR / "plots"
 
 
 # def load_detections(bag_dir: Path) -> pd.DataFrame:
@@ -118,8 +119,9 @@ def main():
     dets = load_detections(bag_dir, t0=t0)
     target = load_detections(bag_dir, "yolo_target", t0=t0)
     target = add_gimbal_mode(target, bag_dir, t0)
+    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
     plot_track_timeline(
-        dets, target, bag_dir, RESULTS_DIR / f"track_timeline_{args.bag}.png"
+        dets, target, bag_dir, PLOTS_DIR / f"track_timeline_{args.bag}.png"
     )
     plt.show()
 

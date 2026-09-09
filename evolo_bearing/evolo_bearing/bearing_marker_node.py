@@ -19,8 +19,7 @@ from tf2_ros.transform_listener import TransformListener
 from visualization_msgs.msg import Marker
 from z1_pro_msgs.msg import Gcudata
 
-from bearing_error import bearing_error_2d
-from bench_experiments.gimbal_yaw_correction import correct_yaw
+from evolo_gimbal_calibration.gimbal_yaw_correction import correct_yaw
 
 WORLD_FRAME = "evolo/map"
 RAY_LENGTH = 300  # Arbitrary ray length for visualization

@@ -24,19 +24,17 @@ Use `-p use_sim_time:=true` when replaying with `ros2 bag play --clock`.
 import csv
 import math
 from pathlib import Path
-import sys
 
 import rclpy
 from rclpy.node import Node
 from visualization_msgs.msg import Marker
 from z1_pro_msgs.msg import Gcudata
 
-from bearing_error import bearing_error_2d
+from .bearing_error import bearing_error_2d
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from bench_experiments.gimbal_yaw_correction import correct_yaw  # noqa: E402
+from evolo_gimbal_calibration.gimbal_yaw_correction import correct_yaw
 
-RESULTS_DIR = Path.home() / "code/experiments/results/"
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
 TRUTH_MAX_AGE_S = 3.0  # skip rows where the truth marker is older than this
 
 

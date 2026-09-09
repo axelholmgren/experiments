@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>evolo_reference_markers</name>
+  <version>0.1.0</version>
+  <description>Fixed and Smarcduino position marker publishers for Evolo.</description>
+  <maintainer email="axelholmgren@users.noreply.github.com">Axel Ericson Holmgren</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>geographic_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>smarc_utilities</exec_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

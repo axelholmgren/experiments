@@ -5,6 +5,12 @@ build/
 dist/
 wheels/
 *.egg-info
+install/
+log/
 
 # Virtual environments
 .venv
+
+# Generated experiment output
+results/*
+!results/.gitkeep

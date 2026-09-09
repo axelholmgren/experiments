@@ -25,7 +25,7 @@ from visualization_msgs.msg import Marker
 from yolo_msgs.msg import DetectionArray
 from z1_pro_msgs.msg import Gcudata
 
-from bench_experiments.gimbal_yaw_correction import correct_yaw
+from evolo_gimbal_calibration.gimbal_yaw_correction import correct_yaw
 
 WORLD_FRAME = "evolo/map"
 CAMERA_FRAME = (
