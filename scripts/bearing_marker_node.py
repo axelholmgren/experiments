@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import rclpy
 from geometry_msgs.msg import (
     Point,
@@ -16,11 +17,15 @@ from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from visualization_msgs.msg import Marker
+from z1_pro_msgs.msg import Gcudata
 
 from bearing_error import bearing_error_2d
+from bench_experiments.gimbal_yaw_correction import correct_yaw
 
 WORLD_FRAME = "evolo/map"
 RAY_LENGTH = 300  # Arbitrary ray length for visualization
+MARKER_COLOR_DEFAULT = (1.0, 0.0, 0.0)
+MARKER_COLOR_YAW_CORRECTION_ACTIVE = (0.0, 1.0, 0.0)
 
 
 class BearingRayNode(Node):
@@ -43,6 +48,12 @@ class BearingRayNode(Node):
         self.marker_publisher = self.create_publisher(
             Marker, "/evolo/gimbal_camera/target_bearing_marker", qos_profile=10
         )
+        self.declare_parameter(
+            "gimbal_gcu_feedback_topic", "/evolo/gimbal_camera/gimbal_gcu_fb"
+        )
+        self.declare_parameter("apply_yaw_correction", True)
+        self.yaw_correction_valid = False
+        self.yaw_correction_deg = 0.0
 
         self.subscription = self.create_subscription(
             msg_type=QuaternionStamped,
@@ -50,12 +61,32 @@ class BearingRayNode(Node):
             callback=self.poi_callback,
             qos_profile=10,
         )
+        self.gimbal_subscription = self.create_subscription(
+            msg_type=Gcudata,
+            topic=self.get_parameter("gimbal_gcu_feedback_topic").value,
+            callback=self.gimbal_callback,
+            qos_profile=10,
+        )
+
+    def gimbal_callback(self, msg: Gcudata):
+        result = correct_yaw(msg.relative_yaw)
+        self.yaw_correction_valid = bool(result.valid)
+        self.yaw_correction_deg = (
+            float(result.yaw_deg - msg.relative_yaw)
+            if self.yaw_correction_valid
+            else 0.0
+        )
 
     def poi_callback(self, msg: QuaternionStamped):
+        correction_active = (
+            self.get_parameter("apply_yaw_correction").value
+            and self.yaw_correction_valid
+        )
         try:
-            # TODO: Time() latest available tranform, should it be msg.header.stamp?
             transform = self.tf_buffer.lookup_transform(
-                target_frame=WORLD_FRAME, source_frame=msg.header.frame_id, time=Time()
+                target_frame=WORLD_FRAME,
+                source_frame=msg.header.frame_id,
+                time=Time(),
             )
         except TransformException as ex:
             self.get_logger().info(
@@ -87,6 +118,14 @@ class BearingRayNode(Node):
         bearing = np.array(
             [bearing_vector.vector.x, bearing_vector.vector.y, bearing_vector.vector.z]
         )
+        if correction_active:
+            correction_rad = math.radians(self.yaw_correction_deg)
+            cos_correction = math.cos(correction_rad)
+            sin_correction = math.sin(correction_rad)
+            bearing[:2] = (
+                cos_correction * bearing[0] - sin_correction * bearing[1],
+                sin_correction * bearing[0] + cos_correction * bearing[1],
+            )
 
         end_point = Point(
             x=origin.x + bearing[0] * RAY_LENGTH,
@@ -106,7 +145,12 @@ class BearingRayNode(Node):
         marker.scale.y = 1.0  # point width
         marker.scale.z = 1.0  # point length
         marker.color.a = 1.0
-        marker.color.r = 1.0
+        color = (
+            MARKER_COLOR_YAW_CORRECTION_ACTIVE
+            if correction_active
+            else MARKER_COLOR_DEFAULT
+        )
+        marker.color.r, marker.color.g, marker.color.b = color
         marker.lifetime = Duration(seconds=1).to_msg()
 
         self.marker_publisher.publish(marker)

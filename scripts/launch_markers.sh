@@ -14,8 +14,11 @@
 DEFAULT_CONFIG="tracking_ray_evolo_smarcduino.rviz"
 
 SCRIPTS="$(dirname "$(realpath "$0")")"
-SIM_TIME="${SIM_TIME:-false}"
-TRACK_IDS="${TRACK_IDS:-[44,68,99]}"
+EXPERIMENTS="$(dirname "$SCRIPTS")"
+# bearing_marker_node imports modules from experiments/.
+export PYTHONPATH="$EXPERIMENTS${PYTHONPATH:+:$PYTHONPATH}"
+SIM_TIME="${SIM_TIME:-true}"
+TRACK_IDS="${TRACK_IDS:-[]}"
 
 RVIZ_CONFIG="${1:-$DEFAULT_CONFIG}"
 [[ "$RVIZ_CONFIG" == */* ]] || RVIZ_CONFIG="$HOME/.rviz2/$RVIZ_CONFIG"

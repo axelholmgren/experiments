@@ -32,8 +32,8 @@ class FixedPositionMarkerNode(Node):
         super().__init__("fixed_position_marker_node")
 
         # decimal = degrees + minutes/60 + seconds/3600
-        self.declare_parameter("latitude", 59.2985777778)
-        self.declare_parameter("longitude", 18.2144694444)
+        self.declare_parameter("latitude", 59.2985134)
+        self.declare_parameter("longitude", 18.2146923)
         self.declare_parameter("altitude", 0.0)
         self.declare_parameter("marker_topic", "/fixed_position_marker")
 

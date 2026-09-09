@@ -23,6 +23,9 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from visualization_msgs.msg import Marker
 from yolo_msgs.msg import DetectionArray
+from z1_pro_msgs.msg import Gcudata
+
+from bench_experiments.gimbal_yaw_correction import correct_yaw
 
 WORLD_FRAME = "evolo/map"
 CAMERA_FRAME = (
@@ -30,6 +33,8 @@ CAMERA_FRAME = (
 )
 CAMERA_APERTURE = 57.1  # same value yolo_action.py uses
 RAY_LENGTH = 300
+MARKER_COLOR_DEFAULT = (1.0, 0.0, 1.0)
+MARKER_COLOR_YAW_CORRECTION_ACTIVE = (0.0, 1.0, 0.0)
 
 
 class BearingRayIdsNode(Node):
@@ -55,6 +60,12 @@ class BearingRayIdsNode(Node):
         self.marker_publisher = self.create_publisher(
             Marker, "/evolo/gimbal_camera/selected_bearing_marker", qos_profile=10
         )
+        self.declare_parameter(
+            "gimbal_gcu_feedback_topic", "/evolo/gimbal_camera/gimbal_gcu_fb"
+        )
+        self.declare_parameter("apply_yaw_correction", True)
+        self.yaw_correction_valid = False
+        self.yaw_correction_deg = 0.0
 
         self.subscription = self.create_subscription(
             msg_type=DetectionArray,
@@ -62,19 +73,40 @@ class BearingRayIdsNode(Node):
             callback=self.tracking_callback,
             qos_profile=10,
         )
+        self.gimbal_subscription = self.create_subscription(
+            msg_type=Gcudata,
+            topic=self.get_parameter("gimbal_gcu_feedback_topic").value,
+            callback=self.gimbal_callback,
+            qos_profile=10,
+        )
 
         self.get_logger().info(
             f"Pointing at track ids: {sorted(self.track_ids, key=int)}"
         )
 
+    def gimbal_callback(self, msg: Gcudata):
+        result = correct_yaw(msg.relative_yaw)
+        self.yaw_correction_valid = bool(result.valid)
+        self.yaw_correction_deg = (
+            float(result.yaw_deg - msg.relative_yaw)
+            if self.yaw_correction_valid
+            else 0.0
+        )
+
     def tracking_callback(self, msg: DetectionArray):
+        correction_active = (
+            self.get_parameter("apply_yaw_correction").value
+            and self.yaw_correction_valid
+        )
         wanted = [det for det in msg.detections if det.id in self.track_ids]
         if not wanted:
             return  # none of the chosen ids in frame, let the marker expire
 
         try:
             transform = self.tf_buffer.lookup_transform(
-                target_frame=WORLD_FRAME, source_frame=CAMERA_FRAME, time=Time()
+                target_frame=WORLD_FRAME,
+                source_frame=CAMERA_FRAME,
+                time=Time(),
             )
         except TransformException as ex:
             self.get_logger().info(
@@ -88,6 +120,13 @@ class BearingRayIdsNode(Node):
             y=transform.transform.translation.y,
             z=transform.transform.translation.z,
         )
+
+        # camera's own world-frame heading, with no pixel offset applied -- the
+        # "boresight" half of the decomposition, same for every detection this callback
+        camera_only = do_transform_vector3(
+            Vector3Stamped(vector=Vector3(x=1.0, y=0.0, z=0.0)), transform
+        ).vector
+        boresight_yaw_deg = math.degrees(math.atan2(camera_only.x, camera_only.y))
 
         for detection in wanted:
             if detection.mask.width <= 0 or detection.mask.height <= 0:
@@ -118,6 +157,14 @@ class BearingRayIdsNode(Node):
                 )
             )
             bearing = do_transform_vector3(forward, transform).vector
+            if correction_active:
+                correction_rad = math.radians(self.yaw_correction_deg)
+                cos_correction = math.cos(correction_rad)
+                sin_correction = math.sin(correction_rad)
+                bearing.x, bearing.y = (
+                    cos_correction * bearing.x - sin_correction * bearing.y,
+                    sin_correction * bearing.x + cos_correction * bearing.y,
+                )
 
             end_point = Point(
                 x=origin.x + bearing.x * RAY_LENGTH,
@@ -134,12 +181,20 @@ class BearingRayIdsNode(Node):
             marker.type = Marker.ARROW
             marker.action = Marker.ADD
             marker.points = [origin, end_point]
+            # not rendered by ARROW markers -- reused to carry the bearing
+            # decomposition out to bearing_error_node without a second topic
+            # to keep in sync (id, boresight_yaw_deg, angle_in_frame_deg)
+            marker.text = f"{detection.id},{boresight_yaw_deg:.3f},{math.degrees(yaw):.3f}"
             marker.scale.x = 0.1  # shaft
             marker.scale.y = 1.0  # head width
             marker.scale.z = 1.0  # head length
             marker.color.a = 1.0
-            marker.color.r = 1.0
-            marker.color.b = 1.0
+            color = (
+                MARKER_COLOR_YAW_CORRECTION_ACTIVE
+                if correction_active
+                else MARKER_COLOR_DEFAULT
+            )
+            marker.color.r, marker.color.g, marker.color.b = color
             marker.lifetime = Duration(
                 seconds=1
             ).to_msg()  # vanishes when the id leaves frame
