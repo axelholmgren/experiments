@@ -6,13 +6,13 @@
 #
 # Optional environment variables:
 #   SIM_TIME=true                 # default; use with `ros2 bag play --clock`
-#   TRACK_IDS='[44,68,99]'        # default is []: no selected-ID rays
+#   TRACK_IDS='[44,68,99]'        # default is empty: no selected-ID rays
 #
 # An optional first argument remains an RViz config path.  A bare name is
 # resolved from ~/.rviz2 for compatibility with the old script.
 
 SIM_TIME="${SIM_TIME:-true}"
-TRACK_IDS="${TRACK_IDS:-[]}"
+TRACK_IDS="${TRACK_IDS:-}"
 
 source /opt/ros/humble/setup.bash
 source "$HOME/code/ros2_ws/install/setup.bash"

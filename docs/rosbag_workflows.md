@@ -14,7 +14,7 @@ ray without selected track IDs:
 source /opt/ros/humble/setup.bash
 source ~/code/ros2_ws/install/setup.bash
 
-ros2 launch evolo_bearing markers.launch.py use_sim_time:=true track_ids:="[]"
+ros2 launch evolo_bearing markers.launch.py use_sim_time:=true
 ```
 
 In a second terminal, replay the bag with ROS time:

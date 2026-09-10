@@ -2,7 +2,8 @@
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -20,8 +21,11 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "track_ids",
-                default_value="[]",
-                description="Optional YOLO track IDs for selected bearing rays.",
+                default_value="",
+                description=(
+                    "Optional YOLO track IDs for selected bearing rays, for example "
+                    "'[44,68,99]'. Leave empty to disable selected-ID rays."
+                ),
             ),
             DeclareLaunchArgument(
                 "rviz_config",
@@ -40,6 +44,9 @@ def generate_launch_description():
                 package="evolo_bearing",
                 executable="bearing_marker_ids_node",
                 name="bearing_ray_ids_node",
+                condition=IfCondition(
+                    PythonExpression(["'", LaunchConfiguration("track_ids"), "' != ''"])
+                ),
                 parameters=[
                     {
                         "use_sim_time": use_sim_time,

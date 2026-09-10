@@ -32,7 +32,7 @@ source install/setup.bash
 For rosbag replay:
 
 ```bash
-ros2 launch evolo_bearing markers.launch.py use_sim_time:=true track_ids:="[]"
+ros2 launch evolo_bearing markers.launch.py use_sim_time:=true
 ros2 bag play <bag-directory> --clock
 ```
 
@@ -40,7 +40,7 @@ The existing entry point remains available:
 
 ```bash
 cd ~/code/ros2_ws/src/evolo_bearing_tracking/scripts
-TRACK_IDS='[]' ./launch_markers.sh
+./launch_markers.sh
 ```
 
 See `docs/rosbag_workflows.md` for the bearing-error CSV workflow.
