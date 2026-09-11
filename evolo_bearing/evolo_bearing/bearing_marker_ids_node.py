@@ -27,7 +27,7 @@ from z1_pro_msgs.msg import Gcudata
 
 from evolo_gimbal_calibration.gimbal_yaw_correction import correct_yaw
 
-WORLD_FRAME = "evolo/map"
+WORLD_FRAME = "evolo/odom"
 CAMERA_FRAME = (
     "evolo/z1_camera_link"  # /yolo/tracking's own frame_id is not in the tf tree
 )
@@ -64,6 +64,8 @@ class BearingRayIdsNode(Node):
             "gimbal_gcu_feedback_topic", "/evolo/gimbal_camera/gimbal_gcu_fb"
         )
         self.declare_parameter("apply_yaw_correction", True)
+        self.declare_parameter("yaw_correction_mode", "absolute")
+        self.declare_parameter("negate_yaw_correction", False)
         self.yaw_correction_valid = False
         self.yaw_correction_deg = 0.0
 
@@ -85,10 +87,16 @@ class BearingRayIdsNode(Node):
         )
 
     def gimbal_callback(self, msg: Gcudata):
-        result = correct_yaw(msg.relative_yaw)
+        result = correct_yaw(
+            msg.relative_yaw,
+            mode=self.get_parameter("yaw_correction_mode").value,
+        )
         self.yaw_correction_valid = bool(result.valid)
+        correction_sign = (
+            -1.0 if self.get_parameter("negate_yaw_correction").value else 1.0
+        )
         self.yaw_correction_deg = (
-            float(result.yaw_deg - msg.relative_yaw)
+            correction_sign * float(result.yaw_deg - msg.relative_yaw)
             if self.yaw_correction_valid
             else 0.0
         )
