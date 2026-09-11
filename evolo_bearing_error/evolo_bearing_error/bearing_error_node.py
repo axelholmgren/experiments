@@ -27,7 +27,7 @@ from pathlib import Path
 
 import rclpy
 from rclpy.node import Node
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import Marker, MarkerArray
 from z1_pro_msgs.msg import Gcudata
 
 from .bearing_error import bearing_error_2d
@@ -50,12 +50,30 @@ class BearingErrorNode(Node):
             "bearing_topic", "/evolo/gimbal_camera/target_bearing_marker"
         )
         self.declare_parameter("truth_topic", "/fixed_position_marker")
+        self.declare_parameter("truth_source", "marker")
+        self.declare_parameter("lidar_boxes_topic", "/bounding_boxes/corrected")
+        self.declare_parameter("lidar_box_id", 0)
+        self.declare_parameter("yaw_correction_mode", "absolute")
         self.declare_parameter(
             "gimbal_gcu_feedback_topic", "/evolo/gimbal_camera/gimbal_gcu_fb"
         )
         self.declare_parameter("bag", "rosbag2_2026_08_17-15_02_44")
 
-        output_csv = RESULTS_DIR / f"bearing_error_{self.get_parameter('bag').value}.csv"
+        truth_source = self.get_parameter("truth_source").value
+        yaw_correction_mode = self.get_parameter("yaw_correction_mode").value
+        bearing_name = self.get_parameter("bearing_topic").value.strip("/").replace("/", "_")
+        if truth_source == "lidar_box":
+            truth_name = (
+                f"lidar_box_{self.get_parameter('lidar_box_id').value}_"
+                f"{self.get_parameter('lidar_boxes_topic').value.strip('/').replace('/', '_')}"
+            )
+        else:
+            truth_name = self.get_parameter("truth_topic").value.strip("/").replace("/", "_")
+
+        output_csv = RESULTS_DIR / (
+            f"bearing_error_{self.get_parameter('bag').value}_"
+            f"{bearing_name}_vs_{truth_name}_yaw_{yaw_correction_mode}.csv"
+        )
         output_csv.parent.mkdir(parents=True, exist_ok=True)
         self.csv_file = output_csv.open("w", newline="")
         self.csv_writer = csv.writer(self.csv_file)
@@ -90,12 +108,22 @@ class BearingErrorNode(Node):
             callback=self.gimbal_callback,
             qos_profile=10,
         )
-        self.truth_subscription = self.create_subscription(
-            msg_type=Marker,
-            topic=self.get_parameter("truth_topic").value,
-            callback=self.truth_callback,
-            qos_profile=10,
-        )
+        if truth_source == "lidar_box":
+            self.truth_subscription = self.create_subscription(
+                msg_type=MarkerArray,
+                topic=self.get_parameter("lidar_boxes_topic").value,
+                callback=self.lidar_truth_callback,
+                qos_profile=10,
+            )
+        elif truth_source == "marker":
+            self.truth_subscription = self.create_subscription(
+                msg_type=Marker,
+                topic=self.get_parameter("truth_topic").value,
+                callback=self.truth_callback,
+                qos_profile=10,
+            )
+        else:
+            raise ValueError("truth_source must be 'marker' or 'lidar_box'")
         self.bearing_subscription = self.create_subscription(
             msg_type=Marker,
             topic=self.get_parameter("bearing_topic").value,
@@ -103,18 +131,40 @@ class BearingErrorNode(Node):
             qos_profile=10,
         )
 
+        truth_description = (
+            f"lidar box {self.get_parameter('lidar_box_id').value} on "
+            f"{self.get_parameter('lidar_boxes_topic').value}"
+            if truth_source == "lidar_box"
+            else self.get_parameter("truth_topic").value
+        )
         self.get_logger().info(
             f"{self.get_parameter('bearing_topic').value} vs "
-            f"{self.get_parameter('truth_topic').value} -> {output_csv}"
+            f"{truth_description} -> {output_csv}"
         )
 
     def truth_callback(self, msg: Marker):
         self.truth = msg
         self.truth_stamp = self.get_clock().now()
 
+    def lidar_truth_callback(self, msg: MarkerArray):
+        box_id = self.get_parameter("lidar_box_id").value
+        self.truth = next(
+            (
+                marker
+                for marker in msg.markers
+                if marker.type == Marker.CUBE and marker.id == box_id
+            ),
+            None,
+        )
+        if self.truth is not None:
+            self.truth_stamp = self.get_clock().now()
+
     def gimbal_callback(self, msg: Gcudata):
         self.gimbal_yaw_deg = msg.relative_yaw  # matches gimbal_yaw_correction.py's psi_readout
-        result = correct_yaw(self.gimbal_yaw_deg)
+        result = correct_yaw(
+            self.gimbal_yaw_deg,
+            mode=self.get_parameter("yaw_correction_mode").value,
+        )
         self.corrected_yaw_deg = result.yaw_deg
         self.yaw_correction_valid = result.valid
         self.yaw_sigma_deg = result.sigma_deg

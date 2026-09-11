@@ -128,7 +128,7 @@ Visualization Manager:
       Enabled: true
       Name: Tracking Ray
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -188,6 +188,19 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /smarcduino/waraps/position_marker
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Corrected LiDAR Boxes
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /bounding_boxes/corrected
       Value: true
     - Class: rviz_default_plugins/Image
       Enabled: true
@@ -253,18 +266,18 @@ Visualization Manager:
       Class: rviz_default_plugins/PointCloud2
       Color: 255; 255; 255
       Color Transformer: Intensity
-      Decay Time: 10
+      Decay Time: 0.5
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 2869
+      Max Intensity: 2428
       Min Color: 0; 0; 0
-      Min Intensity: 5
+      Min Intensity: 6
       Name: PointCloud2
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.5
+      Size (m): 0.10000000149011612
       Style: Flat Squares
       Topic:
         Depth: 5
@@ -322,7 +335,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 60.838871002197266
+      Distance: 14.107099533081055
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -337,10 +350,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2153988778591156
+      Pitch: 0.3153991401195526
       Target Frame: evolo/base_link
       Value: Orbit (rviz)
-      Yaw: 1.0553929805755615
+      Yaw: 2.6953988075256348
     Saved: ~
 Window Geometry:
   Displays:

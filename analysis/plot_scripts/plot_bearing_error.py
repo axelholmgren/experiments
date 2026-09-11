@@ -17,16 +17,34 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "evolo_gimbal_calib
 from evolo_gimbal_calibration.gimbal_yaw_correction import PSI_MAX, PSI_MIN, correct_yaw  # noqa: E402
 
 
-def plot_bearing_error(errors: pd.DataFrame, gimbal: pd.DataFrame, name: str,
-                       out_path: Path):
+def plot_bearing_error(
+    errors: pd.DataFrame,
+    gimbal: pd.DataFrame,
+    name: str,
+    out_path: Path,
+    input_corrected: bool,
+    correction_mode: str,
+):
     if gimbal.empty:
         raise ValueError("no gimbal_yaw_deg data in this csv")
 
     psi = gimbal["gimbal_yaw_deg"].to_numpy()
-    raw_error = gimbal["angle_error_deg"].to_numpy()
-    correction = correct_yaw(psi)
+    logged_error = gimbal["angle_error_deg"].to_numpy()
+    correction = correct_yaw(psi, mode=correction_mode)
     correction_delta = np.asarray(correction.yaw_deg) - psi
-    corrected_error = (raw_error - correction_delta + 180.0) % 360.0 - 180.0
+    if input_corrected:
+        corrected_error = logged_error
+        raw_error = (corrected_error + correction_delta + 180.0) % 360.0 - 180.0
+        corrected_label = "logged corrected ray"
+        title_prefix = (
+            "Reconstructed raw vs logged "
+            f"{correction_mode}-corrected bearing error"
+        )
+    else:
+        raw_error = logged_error
+        corrected_error = (raw_error - correction_delta + 180.0) % 360.0 - 180.0
+        corrected_label = "correction predicted"
+        title_prefix = f"Raw vs {correction_mode}-corrected bearing error"
     in_domain = np.asarray(correction.valid)
     magnitude_improvement = np.abs(raw_error) - np.abs(corrected_error)
 
@@ -41,10 +59,10 @@ def plot_bearing_error(errors: pd.DataFrame, gimbal: pd.DataFrame, name: str,
                 markersize=3, label="raw ray")
     ax_yaw.plot(psi[in_domain], corrected_error[in_domain], ".",
                 color="tab:green", alpha=0.55, markersize=3,
-                label="correction applied")
+                label=corrected_label)
     ax_yaw.set_ylabel("signed bearing error [deg]")
     ax_yaw.set_title(
-        f"Raw vs yaw-corrected bearing error ({in_domain.sum()}/{len(psi)} in range)\n"
+        f"{title_prefix} ({in_domain.sum()}/{len(psi)} in range)\n"
         f"{name}"
     )
     ax_yaw.legend(loc="best")
@@ -56,7 +74,7 @@ def plot_bearing_error(errors: pd.DataFrame, gimbal: pd.DataFrame, name: str,
                  color="0.35", label=f"raw (RMS {np.std(raw_error):.2f}°)")
     ax_hist.hist(corrected_error, bins=bins, histtype="step", linewidth=1.8,
                  color="tab:green",
-                 label=f"corrected (RMS {np.std(corrected_error):.2f}°)")
+                 label=f"{corrected_label} (RMS {np.std(corrected_error):.2f}°)")
     ax_hist.axvline(0.0, color="0.2", linewidth=1.0)
     ax_hist.set_ylabel("sample count")
     ax_hist.set_title("Error distribution")
@@ -77,10 +95,26 @@ def plot_bearing_error(errors: pd.DataFrame, gimbal: pd.DataFrame, name: str,
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("csv", nargs="?", default=DEFAULT_CSV, help="csv name in results/")
+    parser.add_argument(
+        "csv",
+        nargs="?",
+        default=str(RESULTS_DIR / DEFAULT_CSV),
+        help="path to a bearing-error CSV",
+    )
+    parser.add_argument(
+        "--input-corrected",
+        action="store_true",
+        help="reconstruct raw error from a CSV logged with correction enabled",
+    )
+    parser.add_argument(
+        "--correction-mode",
+        choices=("shape", "absolute"),
+        default="absolute",
+        help="calibration mode used to produce or predict the correction",
+    )
     args = parser.parse_args()
 
-    csv_path = RESULTS_DIR / args.csv
+    csv_path = Path(args.csv)
     errors = pd.read_csv(csv_path)
     errors["t"] = errors["t"] - errors["t"].min()  # seconds from the start of the run
 
@@ -101,7 +135,14 @@ def main():
         )
 
     PLOTS_DIR.mkdir(parents=True, exist_ok=True)
-    plot_bearing_error(errors, gimbal, csv_path.stem, PLOTS_DIR / f"{csv_path.stem}.png")
+    plot_bearing_error(
+        errors,
+        gimbal,
+        csv_path.stem,
+        PLOTS_DIR / f"{csv_path.stem}.png",
+        args.input_corrected,
+        args.correction_mode,
+    )
     plt.show()
 
 

@@ -21,7 +21,8 @@ from z1_pro_msgs.msg import Gcudata
 
 from evolo_gimbal_calibration.gimbal_yaw_correction import correct_yaw
 
-WORLD_FRAME = "evolo/map"
+# WORLD_FRAME = "evolo/map"
+WORLD_FRAME = "evolo/odom"
 RAY_LENGTH = 300  # Arbitrary ray length for visualization
 MARKER_COLOR_DEFAULT = (1.0, 0.0, 0.0)
 MARKER_COLOR_YAW_CORRECTION_ACTIVE = (0.0, 1.0, 0.0)
@@ -51,6 +52,8 @@ class BearingRayNode(Node):
             "gimbal_gcu_feedback_topic", "/evolo/gimbal_camera/gimbal_gcu_fb"
         )
         self.declare_parameter("apply_yaw_correction", True)
+        self.declare_parameter("yaw_correction_mode", "absolute")
+        self.declare_parameter("negate_yaw_correction", False)
         self.yaw_correction_valid = False
         self.yaw_correction_deg = 0.0
 
@@ -68,10 +71,16 @@ class BearingRayNode(Node):
         )
 
     def gimbal_callback(self, msg: Gcudata):
-        result = correct_yaw(msg.relative_yaw)
+        result = correct_yaw(
+            msg.relative_yaw,
+            mode=self.get_parameter("yaw_correction_mode").value,
+        )
         self.yaw_correction_valid = bool(result.valid)
+        correction_sign = (
+            -1.0 if self.get_parameter("negate_yaw_correction").value else 1.0
+        )
         self.yaw_correction_deg = (
-            float(result.yaw_deg - msg.relative_yaw)
+            correction_sign * float(result.yaw_deg - msg.relative_yaw)
             if self.yaw_correction_valid
             else 0.0
         )

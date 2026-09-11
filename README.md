@@ -36,6 +36,12 @@ ros2 launch evolo_bearing markers.launch.py use_sim_time:=true
 ros2 bag play <bag-directory> --clock
 ```
 
+To also generate LiDAR-based corrected bounding boxes, add `lidar_boxes:=true`:
+
+```bash
+ros2 launch evolo_bearing markers.launch.py use_sim_time:=true lidar_boxes:=true
+```
+
 The existing entry point remains available:
 
 ```bash
@@ -44,3 +50,5 @@ cd ~/code/ros2_ws/src/evolo_bearing_tracking/scripts
 ```
 
 See `docs/rosbag_workflows.md` for the bearing-error CSV workflow.
+For the paired raw-versus-corrected validation experiment, see
+`docs/yaw_correction_experiment.md`.
